@@ -1,3 +1,14 @@
+/**
+ * @file main.cpp
+ * @author Lipatkin Dmitry
+ * @brief 
+ * @version 0.1
+ * @date 2023-09-13
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include <iostream>
 #include <string>
 #include <memory>
@@ -5,7 +16,6 @@
 #include <sstream>
 #include <functional>
 #include <fstream>
-
 
 //----------------------------------------------------------------
 /**
@@ -68,7 +78,7 @@ private:
 //----------------------------------------------------------------
 /**
  * @brief Класс документа
- * @details Класс документа, содержит в себе имя документа и список графических примитивов
+ * @details Документ содержит в себе имя документа и список графических примитивов
  * 
  */
 class Document {
@@ -145,9 +155,36 @@ bool Memento::openDocument(const std::string& name, Document& doc)
         }        
     }
     fs.close();
-
     return true;
 }
+
+//----------------------------------------------------------------
+/**
+ * @brief Класс подписчика сообщений
+ * 
+ */
+class Subscriber {
+public:    
+    virtual ~Subscriber() = default;
+    virtual void update() = 0;
+};
+/**
+ * @brief Класс издателя сообщений
+ * 
+ */
+class Publisher {
+public:
+    void addSubscriber(std::shared_ptr<Subscriber> ss) {
+        m_subscribers.push_back(ss);
+    }
+protected:
+    void notify() {
+        for (auto& el : m_subscribers)
+            el->update();
+    };
+private:
+    std::list<std::shared_ptr<Subscriber>> m_subscribers;
+};
 
 //----------------------------------------------------------------
 /**
@@ -155,11 +192,11 @@ bool Memento::openDocument(const std::string& name, Document& doc)
  * @details Класс модели данных для работы с документами, в данной реализации поддерживается только один открытый документ
  * 
  */
-class Model {
+class Model : public Publisher {
 public:
     void newDocument(const std::string& name) { 
         m_doc.reset(new Document(name));  
-        if (m_funcUpdate) m_funcUpdate();
+        notify();
     };
     void saveDocument() { 
         if (m_doc.get()) 
@@ -168,27 +205,26 @@ public:
     void openDocument(const std::string& name) {
         std::unique_ptr<Document> doc(new Document(name));
         if (Memento::openDocument(name, *doc)) {
-            doc->print();
             m_doc.swap(doc);
+            notify();
         }
     };
-    void setFuncUpdate(std::function<void()> f) { m_funcUpdate = f; }
     void newRectangle(int width, int height) { 
         if (m_doc.get()) {
             m_doc->addPrimitive(std::unique_ptr<IPrimitive>(new Rectangle(m_doc->getId(), width, height))); 
-            if (m_funcUpdate) m_funcUpdate();
+            notify();
         }
     };
     void newCircle(int radius) {
         if (m_doc.get()) {
             m_doc->addPrimitive(std::unique_ptr<IPrimitive>(new Circle(m_doc->getId(), radius))); 
-            if (m_funcUpdate) m_funcUpdate();
+            notify();
         }
     }   
     void deleteObject(int id) { 
         if (m_doc.get()) {
             m_doc->delPrimitive(id); 
-            if (m_funcUpdate) m_funcUpdate();
+            notify();
         }
     }
     void print() const { 
@@ -197,34 +233,21 @@ public:
     };    
 private:
     std::unique_ptr<Document> m_doc;    ///< текущий открытый документ
-    bool m_editFlag;
-    std::function<void()> m_funcUpdate = nullptr;
 };
 
 //----------------------------------------------------------------
-
+/**
+ * @brief Класс обеспечивающий управление Моделью
+ * 
+ */
 class Controller {
 public: 
-    Controller(Model& model) : m_model(model) { std::cout << "Controller: constructor\n"; } //m_model.setFuncUpdate(modelUpdate);}
-    ~Controller() { std::cout << "Controller: destructor\n"; }
-    void test1();
+    Controller(Model& model) : m_model(model) {}
     void command(std::string line);
-    const Model& getModel() {return m_model;}
+    const Model& model() { return m_model; }
 private:
-    // void openDocument(std::string name) {};
-    // void saveDocument(std::string name) {};
     Model& m_model;
-    void modelUpdate() { std::cout << "model:update()\n"; }
 };
-
-void Controller::test1() 
-{
-    m_model.newDocument("Doc-1");
-    m_model.newRectangle(12, 13);
-    m_model.newCircle(33);
-    m_model.newCircle(124);
-    m_model.print();
-}
 
 void Controller::command(std::string line) 
 {
@@ -272,7 +295,8 @@ void Controller::command(std::string line)
         if (std::getline(std::cin, ss_radius) && !ss_radius.empty()) {
             std::istringstream oss(ss_radius);
             oss >> r;
-            m_model.newCircle(r);
+            if (r != 0)
+                m_model.newCircle(r);
         }
     }
     else if (line == "delete object") {
@@ -291,21 +315,24 @@ void Controller::command(std::string line)
 }
 
 //----------------------------------------------------------------
-
-class View {
+/**
+ * @brief Класс представления модели пользователю
+ * 
+ */
+class View : public Subscriber {
 public:
     View(Controller& controller) : m_controller(controller) {};
-    void view(const Model& model) {
-        model.print();
-    };
     void execute();
+    void update() override { 
+        m_controller.model().print();
+    };
 private:
     Controller& m_controller;
 };
 
 void View::execute() {
     std::string line;
-    while (std::getline(std::cin, line) && !line.empty()) {
+    while (std::cout << "> " && std::getline(std::cin, line) && !line.empty()) {
         m_controller.command(line);
     }
 }
@@ -316,14 +343,10 @@ int main()
 {
     Model model;
     Controller controller(model);
-    View viewer(controller);
-    controller.test1();
+    auto viewer = std::make_shared<View>(controller);
+    model.addSubscriber(viewer);
 
-    // auto update = [](){ std::cout << "f_update\n"; };
-
-    viewer.execute();
-
-    viewer.view(controller.getModel());
+    viewer->execute();
 
     return 0;
 }
