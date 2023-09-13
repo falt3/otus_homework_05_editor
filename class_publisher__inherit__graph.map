@@ -1,0 +1,4 @@
+<map id="Publisher" name="Publisher">
+<area shape="rect" id="node1" title="Класс издателя сообщений" alt="" coords="5,5,81,31"/>
+<area shape="rect" id="node2" href="$class_model.html" title="Класс модели данных для работы с документами" alt="" coords="15,79,72,104"/>
+</map>

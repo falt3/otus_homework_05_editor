@@ -1,0 +1,4 @@
+<map id="Subscriber" name="Subscriber">
+<area shape="rect" id="node1" title="Класс подписчика сообщений" alt="" coords="5,5,89,31"/>
+<area shape="rect" id="node2" href="$class_view.html" title="Класс представления модели пользователю" alt="" coords="22,79,73,104"/>
+</map>

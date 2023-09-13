@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$class_i_primitive.html" title="Интерфейс для графических примитивов" alt="" coords="5,31,83,56"/>
+<area shape="rect" id="node2" href="$class_circle.html" title="Класс окружности" alt="" coords="143,5,198,31"/>
+<area shape="rect" id="node3" href="$class_rectangle.html" title="Класс прямоугольника" alt="" coords="131,55,211,80"/>
+</map>

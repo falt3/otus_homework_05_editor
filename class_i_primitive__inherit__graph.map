@@ -1,0 +1,5 @@
+<map id="IPrimitive" name="IPrimitive">
+<area shape="rect" id="node1" title="Интерфейс для графических примитивов" alt="" coords="39,5,117,31"/>
+<area shape="rect" id="node2" href="$class_circle.html" title="Класс окружности" alt="" coords="5,79,60,104"/>
+<area shape="rect" id="node3" href="$class_rectangle.html" title="Класс прямоугольника" alt="" coords="85,79,165,104"/>
+</map>
